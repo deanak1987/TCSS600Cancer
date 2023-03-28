@@ -59,7 +59,7 @@ f"{SLIDES_PATH}/{manifest.id[slide]}/{manifest.filename[slide]}"
 slide = open_slide(f"{SLIDES_PATH}/{manifest.id[slide]}/{manifest.filename[slide]}")
 
 slide_props = slide.properties
-
+print(slide_props.values())
 print("Vendor is:", slide_props['openslide.vendor'])
 print("Pixel size of X in um is:", slide_props['openslide.mpp-x'])
 print("Pixel size of Y in um is:", slide_props['openslide.mpp-y'])
@@ -274,7 +274,7 @@ def save_loop(row1, col1):
             temp_tile = tiles.get_tile(17, (col, row))
             temp_tile_RGB = temp_tile.convert('RGB')
             temp_tile_np = np.array(temp_tile_RGB)
-            if temp_tile_np.mean() < 230 and temp_tile_np.std() > 15:
+            if temp_tile_np.mean() < 150 and temp_tile_np.std() > 15:
                 # print("****Good tile number:", tile_name)
                 plt.imsave(tile_name + ".png", temp_tile_np)
                 norm_img, H_img, E_img = norm_HnE(temp_tile_np, Io=240, alpha=1, beta=0.15)
