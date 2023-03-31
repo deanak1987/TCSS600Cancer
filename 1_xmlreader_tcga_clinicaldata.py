@@ -166,6 +166,11 @@ for col in df.columns:
     print('\n')
 
 """Removing columns containing ONLY na values"""
+# df = df.dropna(axis=1)
+df['brca_shared-er_status_by_ihc'] = df['brca_shared-er_status_by_ihc'].fillna('Negative')
+df['brca_shared-pr_status_by_ihc'] = df['brca_shared-pr_status_by_ihc'].fillna('Negative')
+df['brca_shared-her2_status_by_ihc'] = df['brca_shared-her2_status_by_ihc'].fillna('Negative')
+df = df.dropna(axis=1)
 
 query_cols = [col for col in df.columns if 'status_by_ihc' in col]
 print(query_cols[:-1])
