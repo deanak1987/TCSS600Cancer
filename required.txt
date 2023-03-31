@@ -1,0 +1,6 @@
+keras==2.12.0
+torch
+tensorflow
+pandas
+numpy
+cv2

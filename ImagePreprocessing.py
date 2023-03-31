@@ -165,32 +165,47 @@ def split(a, n):
     return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
 
 
-SLIDES_PATH = './slides'
+if platform == "linux" or platform == "linux2":
+    SLIDES_PATH = './slides'
+    manifest = pd.read_csv(
+        SLIDES_PATH + '/gdc_manifest_20230223_173244.txt',
+        delimiter='\t'
+    )
+elif platform == "darwin":
+    SLIDES_PATH = './slides'
+    manifest = pd.read_csv(
+        SLIDES_PATH + '/gdc_manifest_20230223_173244.txt',
+        delimiter='\t'
+    )
+elif platform == "win32":
+    SLIDES_PATH = '\\TCSS600Cancer\\slides'
+    manifest = pd.read_csv(
+        SLIDES_PATH + '\\gdc_manifest_20230223_173244.txt',
+        delimiter='\t'
+    )
 
-manifest = pd.read_csv(
-    SLIDES_PATH + '/gdc_manifest_20230223_173244.txt',
-    delimiter='\t'
-)
-manifest.head()
+
 start = time.perf_counter()
 if __name__ == '__main__':
     for k in range(len(manifest)):
         if platform == "linux" or platform == "linux2":
-            til_dir = f"{SLIDES_PATH}/{manifest.id[k]}/tiles"
+            tile_dir = f"{SLIDES_PATH}/{manifest.id[k]}/tiles"
+            slide = open_slide(f"{SLIDES_PATH}/{manifest.id[k]}/{manifest.filename[k]}")
         elif platform == "darwin":
-            til_dir = f"{SLIDES_PATH}/{manifest.id[k]}/tiles"
+            tile_dir = f"{SLIDES_PATH}/{manifest.id[k]}/tiles"
+            slide = open_slide(f"{SLIDES_PATH}/{manifest.id[k]}/{manifest.filename[k]}")
         elif platform == "win32":
-            til_dir = f"F:\\{SLIDES_PATH}\\{manifest.id[k]}\\tiles"
+            tile_dir = f"F:{SLIDES_PATH}\\{manifest.id[k]}\\tiles"
+            slide = open_slide(f"{SLIDES_PATH}/{manifest.id[k]}/{manifest.filename[k]}")
 
-        if os.path.exists(til_dir):
-            shutil.rmtree(til_dir)
-        os.makedirs(til_dir, exist_ok=True)
-        tile_dir = f"{SLIDES_PATH}/{manifest.id[k]}/tiles"
+        if os.path.exists(tile_dir):
+            shutil.rmtree(tile_dir)
+        os.makedirs(tile_dir, exist_ok=True)
+        # tile_dir = f"{SLIDES_PATH}/{manifest.id[k]}/tiles"
 
-        f"{SLIDES_PATH}/{manifest.id[k]}/{manifest.filename[k]}"
+        # f"{SLIDES_PATH}/{manifest.id[k]}/{manifest.filename[k]}"
 
         # Load the slide file (svs) into an object.
-        slide = open_slide(f"{SLIDES_PATH}/{manifest.id[k]}/{manifest.filename[k]}")
 
         slide_props = slide.properties
         # print(slide_props.values())
