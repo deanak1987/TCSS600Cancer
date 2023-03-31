@@ -12,14 +12,35 @@ Original file is located at
 """
 import time
 from multiprocessing import Process
-import openslide
-from openslide import open_slide
-from openslide.deepzoom import DeepZoomGenerator
 import numpy as np
 from matplotlib import pyplot as plt
 import os
 import pandas as pd
 import shutil
+
+
+from sys import platform
+if platform == "linux" or platform == "linux2":
+    import openslide
+    process_count = len(os.sched_getaffinity(0))
+elif platform == "darwin":
+    import openslide
+    process_count = len(os.sched_getaffinity(0))
+elif platform == "win32":
+    OPENSLIDE_PATH = r'F:\TCSS600Cancer\openslide\bin'
+    if hasattr(os, 'add_dll_directory'):
+        # Python >= 3.8 on Windows
+        with os.add_dll_directory(OPENSLIDE_PATH):
+            import openslide
+    else:
+        import openslide
+    process_count = 1
+
+
+
+from openslide import open_slide
+from openslide.deepzoom import DeepZoomGenerator
+
 
 """https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5226799/
 http://wwwx.cs.unc.edu/~mn/sites/default/files/macenko2009.pdf
@@ -120,7 +141,7 @@ def norm_HnE(img, Io=240, alpha=1, beta=0.15):
     return Inorm, H, E
 
 
-def save_loop(row1, col1, directory):
+def save_loop(row1, col1, directory, tiles):
     for row in row1:
         for col in col1:
             tile_name = os.path.join(directory, '%d_%d' % (col, row))
@@ -152,123 +173,128 @@ manifest = pd.read_csv(
 )
 manifest.head()
 start = time.perf_counter()
+if __name__ == '__main__':
+    for k in range(len(manifest)):
+        if platform == "linux" or platform == "linux2":
+            til_dir = f"{SLIDES_PATH}/{manifest.id[k]}/tiles"
+        elif platform == "darwin":
+            til_dir = f"{SLIDES_PATH}/{manifest.id[k]}/tiles"
+        elif platform == "win32":
+            til_dir = f"F:\\{SLIDES_PATH}\\{manifest.id[k]}\\tiles"
 
-for k in range(len(manifest)):
-    til_dir = f"{SLIDES_PATH}/{manifest.id[k]}/tiles"
-    if os.path.exists(til_dir):
-        shutil.rmtree(til_dir)
-    os.makedirs(til_dir, exist_ok=True)
-    tile_dir = f"{SLIDES_PATH}/{manifest.id[k]}/tiles"
+        if os.path.exists(til_dir):
+            shutil.rmtree(til_dir)
+        os.makedirs(til_dir, exist_ok=True)
+        tile_dir = f"{SLIDES_PATH}/{manifest.id[k]}/tiles"
 
-    f"{SLIDES_PATH}/{manifest.id[k]}/{manifest.filename[k]}"
+        f"{SLIDES_PATH}/{manifest.id[k]}/{manifest.filename[k]}"
 
-    # Load the slide file (svs) into an object.
-    slide = open_slide(f"{SLIDES_PATH}/{manifest.id[k]}/{manifest.filename[k]}")
+        # Load the slide file (svs) into an object.
+        slide = open_slide(f"{SLIDES_PATH}/{manifest.id[k]}/{manifest.filename[k]}")
 
-    slide_props = slide.properties
-    # print(slide_props.values())
-    # print("Vendor is:", slide_props['openslide.vendor'])
-    # print("Pixel size of X in um is:", slide_props['openslide.mpp-x'])
-    # print("Pixel size of Y in um is:", slide_props['openslide.mpp-y'])
+        slide_props = slide.properties
+        # print(slide_props.values())
+        # print("Vendor is:", slide_props['openslide.vendor'])
+        # print("Pixel size of X in um is:", slide_props['openslide.mpp-x'])
+        # print("Pixel size of Y in um is:", slide_props['openslide.mpp-y'])
 
-    # Objective used to capture the image
-    objective = float(slide.properties[openslide.PROPERTY_NAME_OBJECTIVE_POWER])
-    # print("The objective power is: ", objective)
+        # Objective used to capture the image
+        objective = float(slide.properties[openslide.PROPERTY_NAME_OBJECTIVE_POWER])
+        # print("The objective power is: ", objective)
 
-    # get slide dimensions for the level 0 - max resolution level
-    slide_dims = slide.dimensions
-    # print(slide_dims)
+        # get slide dimensions for the level 0 - max resolution level
+        slide_dims = slide.dimensions
+        # print(slide_dims)
 
-    # Get a thumbnail of the image and visualize
-    slide_thumb_600 = slide.get_thumbnail(size=(600, 600))
+        # Get a thumbnail of the image and visualize
+        slide_thumb_600 = slide.get_thumbnail(size=(600, 600))
 
-    # Convert thumbnail to numpy array
-    slide_thumb_600_np = np.array(slide_thumb_600)
-    plt.figure(figsize=(8, 8))
-    plt.imshow(slide_thumb_600_np)
+        # Convert thumbnail to numpy array
+        slide_thumb_600_np = np.array(slide_thumb_600)
+        plt.figure(figsize=(8, 8))
+        plt.imshow(slide_thumb_600_np)
 
-    # Get slide dims at each level. Remember that whole slide images store information
-    # as pyramid at various levels
-    dims = slide.level_dimensions
+        # Get slide dims at each level. Remember that whole slide images store information
+        # as pyramid at various levels
+        dims = slide.level_dimensions
 
-    num_levels = len(dims)
-    # print("Number of levels in this image are:", num_levels)
+        num_levels = len(dims)
+        # print("Number of levels in this image are:", num_levels)
 
-    # print("Dimensions of various levels in this image are:", dims)
+        # print("Dimensions of various levels in this image are:", dims)
 
-    # By how much are levels downsampled from the original image?
-    factors = slide.level_downsamples
-    # print("Each level is downsampled by an amount of: ", factors)
+        # By how much are levels downsampled from the original image?
+        factors = slide.level_downsamples
+        # print("Each level is downsampled by an amount of: ", factors)
 
-    # Copy an image from a level
-    level4_dim = dims[3]
+        # Copy an image from a level
+        level4_dim = dims[3]
 
-    # Size of your output image
-    # Remember that the output would be a RGBA image (Not, RGB)
-    level4_img = slide.read_region((0, 0), 3, level4_dim)  # Pillow object, mode=RGBA
+        # Size of your output image
+        # Remember that the output would be a RGBA image (Not, RGB)
+        level4_img = slide.read_region((0, 0), 3, level4_dim)  # Pillow object, mode=RGBA
 
-    # Convert the image to RGB
-    level4_img_RGB = level4_img.convert('RGB')
+        # Convert the image to RGB
+        level4_img_RGB = level4_img.convert('RGB')
 
 
-    # Convert the image into numpy array for processing
-    level4_img_np = np.array(level4_img_RGB)
-    plt.imshow(level4_img_np)
+        # Convert the image into numpy array for processing
+        level4_img_np = np.array(level4_img_RGB)
+        plt.imshow(level4_img_np)
 
-    # Return the best level for displaying the given downsample.
-    SCALE_FACTOR = 32
-    best_level = slide.get_best_level_for_downsample(SCALE_FACTOR)
-    # Here it returns the best level to be 2 (third level)
-    # If you change the scale factor to 2, it will suggest the best level to be 0 (our 1st level)
-    #################################
+        # Return the best level for displaying the given downsample.
+        SCALE_FACTOR = 32
+        best_level = slide.get_best_level_for_downsample(SCALE_FACTOR)
+        # Here it returns the best level to be 2 (third level)
+        # If you change the scale factor to 2, it will suggest the best level to be 0 (our 1st level)
+        #################################
 
-    # Generating tiles for deep learning training or other processing purposes
-    # We can use read_region function and slide over the large image to extract tiles
-    # but an easier approach would be to use DeepZoom based generator.
-    # https://openslide.org/api/python/
+        # Generating tiles for deep learning training or other processing purposes
+        # We can use read_region function and slide over the large image to extract tiles
+        # but an easier approach would be to use DeepZoom based generator.
+        # https://openslide.org/api/python/
 
-    # Generate object for tiles using the DeepZoomGenerator
-    tiles = DeepZoomGenerator(slide, tile_size=256, overlap=0, limit_bounds=False)
-    # Here, we have divided our svs into tiles of size 256 with no overlap.
-    # The tiles object also contains data at many levels.
-    # To check the number of levels
-    # print("The number of levels in the tiles object are: ", tiles.level_count)
-    # print("The dimensions of data in each level are: ", tiles.level_dimensions)
-    #
-    # Total number of tiles in the tiles object
-    # print("Total number of tiles = : ", tiles.tile_count)
+        # Generate object for tiles using the DeepZoomGenerator
+        tiles = DeepZoomGenerator(slide, tile_size=256, overlap=0, limit_bounds=False)
+        # Here, we have divided our svs into tiles of size 256 with no overlap.
+        # The tiles object also contains data at many levels.
+        # To check the number of levels
+        # print("The number of levels in the tiles object are: ", tiles.level_count)
+        # print("The dimensions of data in each level are: ", tiles.level_dimensions)
+        #
+        # Total number of tiles in the tiles object
+        # print("Total number of tiles = : ", tiles.tile_count)
 
-    # How many tiles at a specific level?
-    level_num = 17
-    level_dim = tiles.level_tiles[level_num]
-    # print("Tiles at level ", level_num, " is: ", level_dim)
-    # print("This means there are ", level_dim[0]*level_dim[1], " total tiles in this level")
+        # How many tiles at a specific level?
+        level_num = 17
+        level_dim = tiles.level_tiles[level_num]
+        # print("Tiles at level ", level_num, " is: ", level_dim)
+        # print("This means there are ", level_dim[0]*level_dim[1], " total tiles in this level")
 
-    # Dimensions of the tile (tile size) for a specific tile from a specific layer
-    tile_dims = tiles.get_tile_dimensions(level_num, (0, 0))  # Provide deep zoom level and address (column, row)
-    # print("Tile (0,0)'s shape at level ", level_num, " is: ", tile_dims)
+        # Dimensions of the tile (tile size) for a specific tile from a specific layer
+        tile_dims = tiles.get_tile_dimensions(level_num, (0, 0))  # Provide deep zoom level and address (column, row)
+        # print("Tile (0,0)'s shape at level ", level_num, " is: ", tile_dims)
 
-    # Dimensions of the tile (tile size) for a specific tile from a specific layer
-    tile_dims = tiles.get_tile_dimensions(level_num, (level_dim[0] - 1, level_dim[1] - 1))  # Provide deep zoom level and address (column, row)
-    # print("Tile ", (level_dim[0]-1, level_dim[1]-1), "'s shape at level ", level_num, " is: ", tile_dims)
+        # Dimensions of the tile (tile size) for a specific tile from a specific layer
+        tile_dims = tiles.get_tile_dimensions(level_num, (level_dim[0] - 1, level_dim[1] - 1))  # Provide deep zoom level and address (column, row)
+        # print("Tile ", (level_dim[0]-1, level_dim[1]-1), "'s shape at level ", level_num, " is: ", tile_dims)
 
-    single_tile = tiles.get_tile(17, (62, 70))  # Provide deep zoom level and address (column, row)
-    single_tile_RGB = single_tile.convert('RGB')
+        single_tile = tiles.get_tile(17, (62, 70))  # Provide deep zoom level and address (column, row)
+        single_tile_RGB = single_tile.convert('RGB')
 
-    # Saving each tile to local directory
-    cols, rows = tiles.level_tiles[17]
+        # Saving each tile to local directory
+        cols, rows = tiles.level_tiles[17]
 
-    n = len(os.sched_getaffinity(0))
-    t_rows = tuple(split(range(rows), n))
-    t_cols = tuple(split(range(cols), n))
-    processes = []
-    for i in range(n):
-        for j in range(n):
-            p = Process(target=save_loop, args=(t_rows[i], t_cols[j], tile_dir))
-            p.start()
-            processes.append(p)
-    for p in processes:
-        p.join()
-    end = time.perf_counter()
-    print(round(end - start))
-print("Done")
+        t_rows = tuple(split(range(rows), process_count))
+        t_cols = tuple(split(range(cols), process_count))
+        processes = []
+        for i in range(process_count):
+            for j in range(process_count):
+                p = Process(target=save_loop, args=(t_rows[i], t_cols[j], tile_dir, tiles, ))
+                p.start()
+                processes.append(p)
+        for p in processes:
+            p.join()
+        end = time.perf_counter()
+        print(round(end - start))
+    print("Done")
