@@ -7,6 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1Nw-owXEOrIp-egVdYuP55BrNWR54a5qI
 """
 import glob
+import os
 
 # # Montando acesso ao Goole drive
 # from google.colab import drive
@@ -167,10 +168,10 @@ for col in df.columns:
 
 """Removing columns containing ONLY na values"""
 # df = df.dropna(axis=1)
-df['brca_shared-er_status_by_ihc'] = df['brca_shared-er_status_by_ihc'].fillna('Negative')
-df['brca_shared-pr_status_by_ihc'] = df['brca_shared-pr_status_by_ihc'].fillna('Negative')
-df['brca_shared-her2_status_by_ihc'] = df['brca_shared-her2_status_by_ihc'].fillna('Negative')
-df = df.dropna(axis=1)
+df['brca_shared-er_status_by_ihc'] = df['brca_shared-er_status_by_ihc'].fillna('Null')
+df['brca_shared-pr_status_by_ihc'] = df['brca_shared-pr_status_by_ihc'].fillna('Null')
+df['brca_shared-her2_status_by_ihc'] = df['brca_shared-her2_status_by_ihc'].fillna('Null')
+# df = df.dropna(axis=1)
 
 query_cols = [col for col in df.columns if 'status_by_ihc' in col]
 print(query_cols[:-1])
@@ -196,6 +197,9 @@ df_her_positives = df[(df[her_col] == 'Positive')]
 df_triple_negatives.shape, df_er_positives.shape, df_pr_positives.shape, df_her_positives.shape
 
 output_folder = 'output'
+if not os.path.exists(output_folder):
+    os.makedirs(output_folder)
+
 df.to_csv(output_folder + "/XML_TCGA_01_XmlDataCapture_output.csv", index=False)
 df_triple_negatives.to_csv(output_folder + "/XML_TCGA_02_triple_negatives.csv", index=False)
 df_er_positives.to_csv(output_folder + "/XML_TCGA_03_er_positives.csv", index=False)
