@@ -4,3 +4,4 @@ tensorflow
 pandas
 numpy
 cv2
+xml

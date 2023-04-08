@@ -7,7 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1Nw-owXEOrIp-egVdYuP55BrNWR54a5qI
 """
 import glob
-import os
 
 # # Montando acesso ao Goole drive
 # from google.colab import drive
@@ -168,10 +167,10 @@ for col in df.columns:
 
 """Removing columns containing ONLY na values"""
 # df = df.dropna(axis=1)
-df['brca_shared-er_status_by_ihc'] = df['brca_shared-er_status_by_ihc'].fillna('Null')
-df['brca_shared-pr_status_by_ihc'] = df['brca_shared-pr_status_by_ihc'].fillna('Null')
-df['brca_shared-her2_status_by_ihc'] = df['brca_shared-her2_status_by_ihc'].fillna('Null')
-# df = df.dropna(axis=1)
+df['brca_shared-er_status_by_ihc'] = df['brca_shared-er_status_by_ihc'].fillna('null')
+df['brca_shared-pr_status_by_ihc'] = df['brca_shared-pr_status_by_ihc'].fillna('null')
+df['brca_shared-her2_status_by_ihc'] = df['brca_shared-her2_status_by_ihc'].fillna('null')
+df = df.dropna(axis=1)
 
 query_cols = [col for col in df.columns if 'status_by_ihc' in col]
 print(query_cols[:-1])
@@ -197,9 +196,6 @@ df_her_positives = df[(df[her_col] == 'Positive')]
 df_triple_negatives.shape, df_er_positives.shape, df_pr_positives.shape, df_her_positives.shape
 
 output_folder = 'output'
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
-
 df.to_csv(output_folder + "/XML_TCGA_01_XmlDataCapture_output.csv", index=False)
 df_triple_negatives.to_csv(output_folder + "/XML_TCGA_02_triple_negatives.csv", index=False)
 df_er_positives.to_csv(output_folder + "/XML_TCGA_03_er_positives.csv", index=False)
@@ -214,3 +210,66 @@ df_er_positives['shared-bcr_patient_barcode'], df_pr_positives['shared-bcr_patie
     'shared-bcr_patient_barcode']
 
 print(df_er_positives)
+
+erp_count = 0
+prp_count = 0
+herp_count = 0
+ern_count = 0
+prn_count = 0
+hern_count = 0
+erin_count = 0
+prin_count = 0
+herin_count = 0
+ereq_count = 0
+preq_count = 0
+hereq_count = 0
+erna_count = 0
+prna_count = 0
+herna_count = 0
+
+for i in range(len(df)):
+    if df.iloc[i][er_col] == 'Positive':
+        erp_count +=1
+    if df.iloc[i][pr_col] == 'Positive':
+        prp_count +=1
+    if df.iloc[i][her_col] == 'Positive':
+        herp_count +=1
+    if df.iloc[i][er_col] == 'Negative':
+        ern_count +=1
+    if df.iloc[i][pr_col] == 'Negative':
+        prn_count +=1
+    if df.iloc[i][her_col] == 'Negative':
+        hern_count +=1
+    if df.iloc[i][er_col] == 'Indeterminate':
+        erin_count +=1
+    if df.iloc[i][pr_col] == 'Indeterminate':
+        prin_count +=1
+    if df.iloc[i][her_col] == 'Indeterminate':
+        herin_count +=1
+    if df.iloc[i][er_col] == 'Equivocal':
+        ereq_count +=1
+    if df.iloc[i][pr_col] == 'Equivocal':
+        preq_count +=1
+    if df.iloc[i][her_col] == 'Equivocal':
+        hereq_count +=1
+    if df.iloc[i][er_col] is None:
+        erna_count +=1
+    if df.iloc[i][pr_col].isna:
+        prna_count +=1
+    if df.iloc[i][her_col].isna:
+        herna_count +=1
+print('ER+ biomarker count:', erp_count)
+print('PR+ biomarker count:', prp_count)
+print('HER2+ biomarker count:', herp_count)
+print('ER- biomarker count:', ern_count)
+print('PR- biomarker count:', prn_count)
+print('HER2- biomarker count:', hern_count)
+print('ERin biomarker count:', erin_count)
+print('PRin biomarker count:', prin_count)
+print('HER2in biomarker count:', herin_count)
+print('EReq biomarker count:', ereq_count)
+print('PReq biomarker count:', preq_count)
+print('HER2eq biomarker count:', hereq_count)
+print('ER NaN biomarker count:', erna_count)
+print('PR NaN biomarker count:', prna_count)
+print('HER2 NaN biomarker count:', herna_count)
